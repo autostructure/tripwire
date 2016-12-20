@@ -11,3 +11,5 @@
 -Release v2.0.0 will be production ready test. We have setup the spec helper functions for testing, I have established the install directory to be parsed from hiera. Comments and code has been cleaned up.
 
 -reverting back to 0.6.0 to test RHEL 6 and RHEL 7 chkconfig and systemd compatibility
+
+-Release 2.1.0 will allow the tripwire to be installed on RHEL 6 and RHEL 7 boxes due to their difference in handling services

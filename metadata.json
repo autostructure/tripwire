@@ -1,6 +1,6 @@
 {
   "name": "autostructure-tripwire",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": "Ryan Vandelinder",
   "summary": "Installs and configures tripwire",
   "license": "Apache-2.0",

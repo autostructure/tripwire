@@ -34,7 +34,7 @@ node {
 }
 
 def withRvm(version, cl) {
-    withRvm(version, "executor-${env.EXECUTOR_NUMBER}") {
+  withRvm(version, "executor-${env.EXECUTOR_NUMBER}") {
         cl()
     }
 }

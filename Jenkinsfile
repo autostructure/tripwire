@@ -28,7 +28,7 @@ node {
     }
 
     stage('Do Puppet Acceptance') {
-     sh 'bundle exec rspec spec/acceptance'
+    sh 'bundle exec rspec spec/acceptance'
     }
   }
 }
@@ -64,7 +64,7 @@ def withRvm(version, gemset, cl) {
         "IRBRC=$RVM_HOME/rubies/$version/.irbrc",
         "RUBY_VERSION=$version"
         ]) {
-             'gem install bundler'
+        'gem install bundler'
             cl()
         }
     }

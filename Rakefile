@@ -1,38 +1,75 @@
-require 'puppet_blacksmith/rake_tasks'
-require 'puppet-lint/tasks/puppet-lint'
+require 'rubygems'
+require 'bundler/setup'
+
 require 'puppetlabs_spec_helper/rake_tasks'
+require 'puppet_blacksmith/rake_tasks'
+require 'puppet/version'
+require 'puppet-lint/tasks/puppet-lint'
+require 'puppet-syntax/tasks/puppet-syntax'
+require 'rubocop/rake_task'
 
-PuppetLint.configuration.send('relative')
-PuppetLint.configuration.send('disable_documentation')
-PuppetLint.configuration.send('disable_single_quote_string_with_variables')
-
-desc 'Generate pooler nodesets'
-task :gen_nodeset do
-  require 'beaker-hostgenerator'
-  require 'securerandom'
-  require 'fileutils'
-
-  agent_target = ENV['TEST_TARGET']
-  if ! agent_target
-    STDERR.puts 'TEST_TARGET environment variable is not set'
-    STDERR.puts 'setting to default value of "redhat-64default."'
-    agent_target = 'redhat-64default.'
-  end
-
-  master_target = ENV['MASTER_TEST_TARGET']
-  if ! master_target
-    STDERR.puts 'MASTER_TEST_TARGET environment variable is not set'
-    STDERR.puts 'setting to default value of "redhat7-64mdcl"'
-    master_target = 'redhat7-64mdcl'
-  end
-
-  targets = "#{master_target}-#{agent_target}"
-  cli = BeakerHostGenerator::CLI.new([targets])
-  nodeset_dir = "tmp/nodesets"
-  nodeset = "#{nodeset_dir}/#{targets}-#{SecureRandom.uuid}.yaml"
-  FileUtils.mkdir_p(nodeset_dir)
-  File.open(nodeset, 'w') do |fh|
-    fh.print(cli.execute)
-  end
-  puts nodeset
+if RUBY_VERSION >= '1.9'
+  require 'rubocop/rake_task'
+  RuboCop::RakeTask.new
 end
+
+desc 'Validate manifests, templates, and ruby files'
+task :validate do
+  Dir['manifests/**/*.pp'].each do |manifest|
+    sh "puppet parser validate --noop #{manifest}"
+  end
+  Dir['spec/**/*.rb', 'lib/**/*.rb'].each do |ruby_file|
+    sh "ruby -c #{ruby_file}" unless ruby_file =~ %r{spec/fixtures}
+  end
+  Dir['templates/**/*.erb'].each do |template|
+    sh "erb -P -x -T '-' #{template} | ruby -c"
+  end
+end
+
+# require 'controlrepo/rake_tasks'
+
+# These gems aren't always present, for instance
+# on Travis with --without development
+begin
+  require 'puppet_blacksmith/rake_tasks'
+rescue LoadError # rubocop:disable Lint/HandleExceptions
+end
+
+# RuboCop::RakeTask.new
+
+Rake::Task[:lint].clear
+
+PuppetLint.configuration.relative = true
+PuppetLint.configuration.disable_80chars
+PuppetLint.configuration.disable_class_inherits_from_params_class
+PuppetLint.configuration.disable_class_parameter_defaults
+PuppetLint.configuration.fail_on_warnings = true
+PuppetLint.configuration.ignore_paths = ['spec/**/*.pp', 'pkg/**/*.pp']
+
+exclude_paths = [
+  "bundle/**/*",
+  "pkg/**/*",
+  "vendor/**/*",
+  "spec/**/*"
+]
+
+PuppetLint::RakeTask.new :lint do |config|
+  config.ignore_paths = exclude_paths
+end
+
+PuppetSyntax.exclude_paths = exclude_paths
+
+desc "Populate CONTRIBUTORS file"
+task :contributors do
+  system("git log --format='%aN' | sort -u > CONTRIBUTORS")
+end
+
+desc "Run syntax, lint, and spec tests."
+task test: [
+  :syntax,
+  :metadata_lint,
+  :lint,
+  :validate,
+  :rubocop,
+  :spec
+]

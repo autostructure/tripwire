@@ -34,6 +34,6 @@ elsif $::operatingsystemrelease =~ /^7.*/ {
     ),
   }
 
- }
+  }
 
 }

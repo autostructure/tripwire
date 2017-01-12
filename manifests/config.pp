@@ -28,11 +28,11 @@ elsif $::operatingsystemrelease =~ /^7.*/ {
     group   => 'root',
     content => epp(
       'tripwire/sysdtwdaemon.epp',
-      {
-        client_installdir => $::tripwire::client_installdir
-      }
-    ),
-  }
+        {
+          client_installdir => $::tripwire::client_installdir
+        }
+      ),
+    }
 
   }
 
